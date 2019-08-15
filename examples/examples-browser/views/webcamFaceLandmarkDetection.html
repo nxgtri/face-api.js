@@ -21,6 +21,19 @@
       <canvas id="overlay" />
     </div>
 
+    <!-- @rica { -->
+    <div style="position:fixed; left:1100px; top:100px; width:800px; height:550px; border:1px solid red" id='CartoonFaceBackground'>
+      <img src='face/face.png' style='position:absolute;'>
+      <img src='face/eyebrow1.png' style='position:absolute; left:70px; top:170px; z-index:1;'>
+      <img src='face/eyebrow2.png' style='position:absolute; left:275px; top:173px; z-index:1;'>
+      <img src='face/mouth1.png' style='position:absolute; left:185px; top:430px; z-index:1;'>
+      <img src='face/mouth2.png' style='position:absolute; left:155px; top:410px; z-index:2;'>
+      <img src='face/mouth3.png' style='position:absolute; left:185px; top:410px; z-index:3;'>
+      <img src='face/mouth4.png' style='position:absolute; left:205px; top:395px; z-index:4;'>
+      <img src='face/mouth5.png' style='position:absolute; left:155px; top:410px; z-index:5;'>
+    </div>
+    <!-- @rica } -->
+
     <div class="row side-by-side">
 
       <!-- face_detector_selection_control -->
@@ -142,6 +155,16 @@
   <script>
     let forwardTimes = []
     let withBoxes = true
+    // @rica {
+    let cartoonFaceBackground = $('#CartoonFaceBackground');
+    let numberNodes = []
+    for (let i = 0; i < 68; ++i)
+    {
+      let node = $(`<div style='position:absolute; top:0px; left:0px'>${i}</div>`)
+      numberNodes.push(node);
+      cartoonFaceBackground.append(node);
+    }
+    // @rica }
 
     function onChangeHideBoundingBoxes(e) {
       withBoxes = !$(e.target).prop('checked')
@@ -178,6 +201,19 @@
           faceapi.draw.drawDetections(canvas, resizedResult)
         }
         faceapi.draw.drawFaceLandmarks(canvas, resizedResult)
+        
+        // @rica {
+        let positions = resizedResult.landmarks.positions;
+        // console.log(positions[0].x, positions[1].y)
+
+        for (let i = 0; i < 68; ++i)
+        {
+          let p = positions[i];
+          let node = numberNodes[i];
+          node.css('top', `${p.y}px`);
+          node.css('left', `${p.x * 3}px`);
+        }
+        // @rica }
       }
 
       setTimeout(() => onPlay())
