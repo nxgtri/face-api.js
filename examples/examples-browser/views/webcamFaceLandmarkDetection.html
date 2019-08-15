@@ -24,13 +24,13 @@
     <!-- @rica { -->
     <div style="position:fixed; left:1100px; top:100px; width:800px; height:550px; border:1px solid red" id='CartoonFaceBackground'>
       <img src='face/face.png' style='position:absolute;'>
-      <img src='face/eyebrow1.png' style='position:absolute; left:70px; top:170px; z-index:1;'>
-      <img src='face/eyebrow2.png' style='position:absolute; left:275px; top:173px; z-index:1;'>
-      <img src='face/mouth1.png' style='position:absolute; left:185px; top:430px; z-index:1;'>
-      <img src='face/mouth2.png' style='position:absolute; left:155px; top:410px; z-index:2;'>
-      <img src='face/mouth3.png' style='position:absolute; left:185px; top:410px; z-index:3;'>
-      <img src='face/mouth4.png' style='position:absolute; left:205px; top:395px; z-index:4;'>
-      <img src='face/mouth5.png' style='position:absolute; left:155px; top:410px; z-index:5;'>
+      <img src='face/eyebrow1.png' id='eyebrow1' style='position:absolute; left:70px; top:170px; z-index:1;'>
+      <img src='face/eyebrow2.png' id='eyebrow2' style='position:absolute; left:275px; top:173px; z-index:1;'>
+      <img src='face/mouth1.png' id='mouth1' style='position:absolute; left:185px; top:430px; z-index:1;'>
+      <img src='face/mouth2.png' id='mouth2' style='position:absolute; left:155px; top:410px; z-index:2;'>
+      <img src='face/mouth3.png' id='mouth3' style='position:absolute; left:185px; top:410px; z-index:3;'>
+      <img src='face/mouth4.png' id='mouth4' style='position:absolute; left:205px; top:395px; z-index:4;'>
+      <img src='face/mouth5.png' id='mouth5' style='position:absolute; left:155px; top:410px; z-index:5;'>
     </div>
     <!-- @rica } -->
 
@@ -164,6 +164,11 @@
       numberNodes.push(node);
       cartoonFaceBackground.append(node);
     }
+
+    let eyebrows = [ 'ZERO', $('#eyebrow1'), $('#eyebrow2') ];
+    let mouths = [ 'ZERO', $('#mouth1'), $('#mouth2'), $('#mouth3'), $('#mouth4'), $('#mouth5') ];
+    let eyebrowsDefaultY = [ 'ZERO', 230, 233 ];
+    let lastEyebrowsHeight = null;
     // @rica }
 
     function onChangeHideBoundingBoxes(e) {
@@ -203,16 +208,79 @@
         faceapi.draw.drawFaceLandmarks(canvas, resizedResult)
         
         // @rica {
-        let positions = resizedResult.landmarks.positions;
-        // console.log(positions[0].x, positions[1].y)
+        let P = resizedResult.landmarks.positions;
 
         for (let i = 0; i < 68; ++i)
         {
-          let p = positions[i];
+          let p = P[i];
           let node = numberNodes[i];
           node.css('top', `${p.y}px`);
           node.css('left', `${p.x * 3}px`);
         }
+
+        let idx_NoseBottom = 33;
+
+        let idx_LipUp = 62;
+        let idx_LipDown = 66;
+        let idx_LipLeft = 48;
+        let idx_LipRight = 54;
+
+        let idx_LeftEye = 39;
+        let idx_LeftEyebrow = 21;
+        let idx_RightEye = 42;
+        let idx_RightEyebrow = 22;
+
+        let faceSizeBase = (-P[idx_LeftEye].y + P[idx_NoseBottom].y) + (-P[idx_RightEye].y + P[idx_NoseBottom].y)
+
+        let mouthHeight = (P[idx_LipDown].y - P[idx_LipUp].y) / faceSizeBase;
+        let mouthWidth = (P[idx_LipRight].x - P[idx_LipLeft].x) / faceSizeBase;
+
+        // 눈썹
+        let EYEBROW_HEIGHT = 300;
+        let EYEBROW_ROTATE = 120;
+        let leftEyebrowHeight = (P[idx_LeftEye].y - P[idx_LeftEyebrow].y) / faceSizeBase;
+        let rightEyebrowHeight = (P[idx_RightEye].y - P[idx_RightEyebrow].y) / faceSizeBase;
+
+        if (lastEyebrowsHeight === null)
+        {
+          lastEyebrowsHeight = [ 'ZERO', leftEyebrowHeight, rightEyebrowHeight ];
+        }
+        else
+        {
+          leftEyebrowHeight = leftEyebrowHeight * 0.4 + lastEyebrowsHeight[1] * 0.6;
+          rightEyebrowHeight = rightEyebrowHeight * 0.4 + lastEyebrowsHeight[2] * 0.6;
+          lastEyebrowsHeight[1] = leftEyebrowHeight;
+          lastEyebrowsHeight[2] = rightEyebrowHeight;
+        }
+
+        console.log(leftEyebrowHeight, rightEyebrowHeight)
+        eyebrows[1].css('top', `${eyebrowsDefaultY[1] - leftEyebrowHeight * EYEBROW_HEIGHT}px`);
+        eyebrows[2].css('top', `${eyebrowsDefaultY[2] - rightEyebrowHeight * EYEBROW_HEIGHT}px`);
+        eyebrows[1].css('transform', `rotate(${30-leftEyebrowHeight * EYEBROW_ROTATE}deg)`);
+        eyebrows[2].css('transform', `rotate(${-30+rightEyebrowHeight * EYEBROW_ROTATE}deg)`);
+
+        // 입
+        let activeMouth;
+        if (mouthHeight < 0.03) // 다뭄
+        {
+          activeMouth = (mouthWidth > 0.55) ? 2 : 1;
+        }
+        else if (mouthHeight < 0.20) // 살짝벌림
+        {
+          activeMouth = (mouthWidth > 0.55) ? 5 : 3;
+        }
+        else // 크게벌림
+        {
+          activeMouth = 4;
+        }
+        for (let i = 1; i <= 5; ++i)
+        {
+          if (i == activeMouth)
+            mouths[i].show();
+          else
+            mouths[i].hide();
+        }
+
         // @rica }
       }
 
